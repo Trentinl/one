@@ -1,0 +1,3 @@
+C:/Users/whisp/CLionProjects/trapdoor/one/cmake-build-debug/CMakeFiles/one.dir
+C:/Users/whisp/CLionProjects/trapdoor/one/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/whisp/CLionProjects/trapdoor/one/cmake-build-debug/CMakeFiles/rebuild_cache.dir
