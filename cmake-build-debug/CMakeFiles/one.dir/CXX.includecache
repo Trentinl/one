@@ -7,8 +7,12 @@
 #IncludeRegexTransform: 
 
 C:/Users/whisp/CLionProjects/trapdoor/one/main.cpp
-stdio.h
--
 iostream
+-
+cctype
+-
+unordered_map
+-
+fstream
 -
 
