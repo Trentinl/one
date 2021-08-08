@@ -2,6 +2,7 @@
 #include <cctype>
 #include <unordered_map>
 #include <fstream>
+#include <cstring>
 
 using namespace std;
 
@@ -67,7 +68,7 @@ string decrypt_word(const string& encrypted_word, const unordered_map<string, st
     try {
         return words.at(encrypted_word);
     } catch (out_of_range) {
-        return "?";
+        return string(encrypted_word.length(), '?');
     }
 }
 
@@ -89,64 +90,71 @@ unordered_map<string, string> words_from_list(const string& filename) {
     return words;
 }
 
+/// Finds the next series of one or more numbers from the string.
+/// @param word_len is overwritten as the length of the returned string.
+/// @returns a slice of the msg string if a word could be found, otherwise empty string is returned.
+string next_encrypted_word(const string& msg, size_t start_pos, size_t& end_pos) {
+    size_t start;
+    size_t end = msg.length();
+    bool reading_word = false;
+    for (size_t i = start_pos; i < msg.length(); ++i) {
+        if (isdigit(msg[i])) { // If this character is a number
+            if (!reading_word) {
+                start = i;
+                reading_word = true;
+            }
+        } else {
+            if (reading_word) {
+                end = i;
+                break;
+            }
+        }
+    }
+    if (!reading_word) return {}; // If we didn't find a word
+    end_pos = end; // Set the caller's variable for the end position
+    return msg.substr(start, end-start); // Return part of the string that contains the word
+}
+
 string decrypt(const string& msg) {
+    string decrypted_msg;
     unordered_map<string, string> words = words_from_list("words.txt");
 
-    return decrypt_word(msg, words);
+    size_t pos = 0;
+    size_t last_word_end;
+    string word;
+    while (!(word = next_encrypted_word(msg, pos, last_word_end)).empty()) {
+        auto decrypted = decrypt_word(word, words);
+        decrypted_msg.append(msg.substr(pos, last_word_end-decrypted.length()-pos));
+        decrypted_msg.append(decrypted);
+        pos = last_word_end;
+    }
+    // Push any characters past the last encrypted word
+    if (last_word_end < decrypted_msg.length()) decrypted_msg.append(msg.substr(last_word_end));
+
+    return decrypted_msg;
 }
 
-int main() {
-    string msg = "3634605896";
-    cout << decrypt(msg) << endl;
+const char* const USAGE = "USAGE: one <encrypt|decrypt> <message>";
+
+void print_help() {
+    cout << USAGE << endl;
+}
+
+int main(int argc, const char* argv[]) {
+    if (argc == 3) {
+        if (strcmp(argv[1], "encrypt") == 0) {
+            cout << encrypt(argv[2]) << endl;
+        } else if (strcmp(argv[1], "decrypt") == 0) {
+            cout << decrypt(argv[2]) << endl;
+        } else {
+            cout << "Not a valid command. Either \"encrypt\" or \"decrypt\"." << endl;
+            print_help();
+            return 1;
+        }
+    } else {
+        cout << "Need more than one argument." << endl;
+        print_help();
+        return 1;
+    }
     return 0;
 }
-
-
-
-
-// main:
-// either check the command line arguments or
-// allow the user to interactively decide what
-// they want to do.
-
-// their options are: decode a keycrypt string,
-// or: encrypt a keycrypt string
-
-
-// encrypting is taking a string to produce another string of the same length
-// trentin is handsome -> 5436586 82 61632973
-
-// decrypting is also taking a string to produce another string, but it is much more involved
-// 5436586 82 61632973 -> trentin is handsome
-
-
-// Crypt
-// "1" - 'Q' | 'A' | 'Z'
-// "2" - 'W' | 'S' | 'X'
-// "3" - 'E' | 'D' | 'C'
-// "4" - 'R' | 'F' | 'V'
-// "5" - 'T' | 'G' | 'B'
-// "6" - 'Y' | 'H' | 'N'
-// "7" - 'U' | 'J' | 'M'
-// "8" - 'I' | 'K'
-// "9" - 'O' | 'L'
-// "0" - 'P'
-
-//#include <map>
-//#include <iostream>
-//#include <cassert>
-//
-//int main(int argc, char **argv)
-//{
-//    std::map<std::string, int> m;
-//    m["hello"] = 23;
-//    // check if key is present
-//    if (m.find("world") != m.end())
-//        std::cout << "map contains key world!\n";
-//    // retrieve
-//    std::cout << m["hello"] << '\n';
-//    std::map<std::string, int>::iterator i = m.find("hello");
-//    assert(i != m.end());
-//    std::cout << "Key: " << i->first << " Value: " << i->second << '\n';
-//    return 0;
-//}
